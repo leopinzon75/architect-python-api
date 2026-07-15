@@ -30,13 +30,20 @@ jobs:
 
     - name: Iniciar LocalStack en segundo plano
       run: |
-        # Arrancamos LocalStack directamente con Docker sin bloquear el pipeline
+        # Arrancamos LocalStack en segundo plano
         docker run -d --name localstack -p 4566:4566 -e SERVICES=ecr localstack/localstack:latest
         
-        # Esperamos a que LocalStack responda en el puerto 4566 de forma segura
-        echo "Esperando que LocalStack esté listo..."
-        timeout 30s bash -c 'until curl -s http://localhost:4566/_localstack/health | grep -q "\"ecr\":"; do sleep 2; done' || true
-        echo "¡LocalStack inicializado y listo para recibir llamadas!"
+        # Esperamos de forma segura hasta que el puerto 4566 responda activamente
+        echo "Esperando que el puerto de LocalStack (4566) esté listo..."
+        for i in {1..15}; do
+          if curl -s http://localhost:4566/health | grep -q "\"ecr\":"; then
+            echo "¡LocalStack y ECR están completamente listos!"
+            exit 0
+          fi
+          echo "LocalStack aún inicializando... esperando 3 segundos más (Intento $i de 15)"
+          sleep 3
+        done
+        echo "Advertencia: Se alcanzó el límite de espera, continuando de todos modos."
 
     - name: Crear repositorio ECR en LocalStack
       run: |
