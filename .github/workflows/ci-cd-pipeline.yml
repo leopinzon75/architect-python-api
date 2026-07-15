@@ -30,15 +30,28 @@ jobs:
 
     - name: Iniciar LocalStack en segundo plano
       run: |
-        # Arrancamos LocalStack mapeando el puerto de manera global en el runner
-        docker run -d --name localstack -p 4566:4566 -e SERVICES=ecr localstack/localstack:latest
+        # Arrancamos LocalStack con el socket de Docker montado y DEBUG activo
+        docker run -d \
+          --name localstack \
+          -p 4566:4566 \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -e SERVICES=ecr \
+          -e DEBUG=1 \
+          localstack/localstack:latest
         
-        # Espera fija inicial para permitir que el motor levante los sockets
-        echo "Esperando inicialización de los servicios de LocalStack..."
-        sleep 20
+        # Espera inicial para que el contenedor intente levantar
+        echo "Esperando 15 segundos para la inicialización inicial..."
+        sleep 15
         
-        # Verificación directa de disponibilidad del puerto
+        # Inspección preventiva de estado y logs
+        echo "=== ESTADO DEL CONTENEDOR ==="
         docker ps -a
+        
+        echo "=== LOGS DE LOCALSTACK ==="
+        docker logs localstack
+        
+        echo "Esperando 5 segundos adicionales para asegurar puertos..."
+        sleep 5
         echo "¡LocalStack listo para recibir peticiones!"
 
     - name: Crear repositorio ECR en LocalStack
