@@ -18,19 +18,23 @@ jobs:
         python-version: '3.11'
 
     - name: Instalar dependencias locales de prueba
+      # Le indicamos que busque el requirements.txt dentro de ejercicio_2
+      working-directory: ./ejercicio_2
       run: |
         python -m pip install --upgrade pip
         pip install flake8
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Validar sintaxis con Flake8
+      working-directory: ./ejercicio_2
       run: |
         # Validamos que tu script de telemetría no tenga errores de sintaxis
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Ejecutar Prueba del Procesamiento de Telemetría (Mock Enterprise)
+      # Nos paramos en ejercicio_2 para que encuentre el script multicloud_batch_worker.py
+      working-directory: ./ejercicio_2
       run: |
-        # Ejecutamos el script simulando el entorno real de AWS/Azure con Moto
         export SIMULACION=False
         export AWS_INPUT_BUCKET=dev-fleet-raw-data
         export AWS_INPUT_KEY=daily_telemetry.csv
@@ -49,8 +53,9 @@ jobs:
         sleep 5
 
     - name: Construir Imagen de Docker del Fleet Worker
+      # Nos paramos en ejercicio_2 para usar el Dockerfile correcto
+      working-directory: ./ejercicio_2
       run: |
-        # Construimos la imagen de Docker usando el Dockerfile del Worker
         docker build -t fleet-multicloud-worker:latest .
 
     - name: Taggear y Empujar la Imagen al Registro Local
