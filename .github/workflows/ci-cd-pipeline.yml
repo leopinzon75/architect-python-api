@@ -33,8 +33,8 @@ jobs:
     - name: Ejecutar Prueba del Procesamiento de Telemetría (Mock Enterprise)
       working-directory: ./ejercicio_2
       run: |
-        # CAMBIAMOS A MODO SIMULACIÓN VERDADERO (3 FILAS EN MEMORIA)
-        export SIMULACION=True
+        # VOLVEMOS AL MODO ENTERPRISE ROBUSTO (1,000 REGISTROS EN MOTO S3)
+        export SIMULACION=False
         export AWS_INPUT_BUCKET=dev-fleet-raw-data
         export AWS_INPUT_KEY=daily_telemetry.csv
         export AZURE_OUTPUT_CONTAINER=dev-fleet-alerts
