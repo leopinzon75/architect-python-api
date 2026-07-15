@@ -1,0 +1,63 @@
+name: Pipeline CI/CD - Fleet Multicloud Worker (Docker Registry Test)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test-and-local-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar código
+      uses: actions/checkout@v4
+
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Instalar dependencias locales de prueba
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Validar sintaxis con Flake8
+      run: |
+        # Validamos que tu script de telemetría no tenga errores de sintaxis
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    - name: Ejecutar Prueba del Procesamiento de Telemetría (Mock Enterprise)
+      run: |
+        # Ejecutamos el script simulando el entorno real de AWS/Azure con Moto
+        export SIMULACION=False
+        export AWS_INPUT_BUCKET=dev-fleet-raw-data
+        export AWS_INPUT_KEY=daily_telemetry.csv
+        export AZURE_OUTPUT_CONTAINER=dev-fleet-alerts
+        export AWS_ACCESS_KEY_ID=mock_key_para_pruebas_locales
+        export AWS_SECRET_ACCESS_KEY=mock_secret_para_pruebas_locales
+        
+        python multicloud_batch_worker.py
+
+    - name: Iniciar Registro Local de Docker
+      run: |
+        # Levantamos el registro Docker oficial y gratuito en el puerto 5000
+        docker run -d -p 5000:5000 --name registro-local registry:2
+        
+        echo "Esperando 5 segundos para inicializar el registro..."
+        sleep 5
+
+    - name: Construir Imagen de Docker del Fleet Worker
+      run: |
+        # Construimos la imagen de Docker usando el Dockerfile del Worker
+        docker build -t fleet-multicloud-worker:latest .
+
+    - name: Taggear y Empujar la Imagen al Registro Local
+      run: |
+        # Taggeamos la imagen apuntando a nuestro registro local
+        docker tag fleet-multicloud-worker:latest localhost:5000/fleet-multicloud-worker-repo:latest
+        
+        # Subimos la imagen para simular la publicación en producción
+        docker push localhost:5000/fleet-multicloud-worker-repo:latest
+        echo "¡Imagen de Fleet Worker subida con éxito al registro simulado!"
