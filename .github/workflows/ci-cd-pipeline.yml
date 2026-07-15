@@ -30,30 +30,22 @@ jobs:
 
     - name: Iniciar LocalStack en segundo plano
       run: |
-        # Usamos la versión 3.4.0 (estable y libre de problemas de licencia Pro)
-        # y desactivamos explícitamente la activación Pro.
+        # Usamos la versión 2.0.0, la última con soporte gratuito (Community) para ECR.
         docker run -d \
           --name localstack \
           -p 4566:4566 \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -e SERVICES=ecr \
-          -e ACTIVATE_PRO=0 \
-          -e DEBUG=1 \
-          localstack/localstack:3.4.0
+          localstack/localstack:2.0.0
         
-        # Espera inicial para que el contenedor intente levantar
-        echo "Esperando 15 segundos para la inicialización inicial..."
+        # Espera para que el contenedor levante
+        echo "Esperando 15 segundos para la inicialización..."
         sleep 15
         
-        # Inspección preventiva de estado y logs
+        # Inspección preventiva de estado
         echo "=== ESTADO DEL CONTENEDOR ==="
         docker ps -a
         
-        echo "=== LOGS DE LOCALSTACK ==="
-        docker logs localstack
-        
-        echo "Esperando 5 segundos adicionales para asegurar puertos..."
-        sleep 5
         echo "¡LocalStack listo para recibir peticiones!"
 
     - name: Crear repositorio ECR en LocalStack
