@@ -4,4 +4,4 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"Hello": "Youtube"}
+    return {"Hello": "Youtube", "status": "Pipeline de Ejercicio 1 funcionando perfectamente"}
